@@ -4,6 +4,9 @@ import re
 from datetime import datetime
 from docx import Document
 from io import StringIO
+from streamlit.logger import get_logger
+
+LOGGER = get_logger(__name__)
 
 # Function to extract attendance data
 @st.cache_data
@@ -59,6 +62,11 @@ def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
 
 # Streamlit app
 def app():
+    st.set_page_config(
+        page_title="Attendance Sheet Automation System (ASAS)",
+        page_icon="👍",
+    )
+
     st.title("Attendance Sheet Automation System (ASAS)")
 
     # File upload
