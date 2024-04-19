@@ -9,7 +9,7 @@ from streamlit.logger import get_logger
 LOGGER = get_logger(__name__)
 
 # Function to extract attendance data
-@st.cache_data
+# @st.cache_data
 def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
