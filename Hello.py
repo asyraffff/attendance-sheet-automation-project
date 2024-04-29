@@ -13,9 +13,7 @@ LOGGER = get_logger(__name__)
 def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
-    # pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
-    # pattern = r'\[(.*?)\] ((?:\+\d{1,3}\s?\d{1,2}\u200E?-\d{3}\s?\d{4})|(?:\w+(?:\s\w+)*(?:\s\w+\s\w+)*)?):\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'
-    pattern = r'\[(.*?)\]\s*(?:{})\s*:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format('|'.join(map(re.escape, whatsapp_name)))
+    pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
     pattern_in = r'\b(clock|in)\b'
     pattern_out = r'\b(clock|out)\b'
 
