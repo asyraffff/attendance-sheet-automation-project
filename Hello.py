@@ -13,93 +13,37 @@ LOGGER = get_logger(__name__)
 def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
-
-    # Define patterns for clocking in and out
     patterns_in = [
-        r'Morning, clocking in, hi {}',
-        r'Morning...clocking in',
-        r'Good morning, clocking in',
-        r'morning clock in',
-        r'Morning clock in',
-        r'Morning... clocking in',
-        r'Morning clocking in',
-        r'Morning clocking in',
-        r'Morning.. clocking in',
-        r'Good morning, clock in',
-        r'Aisyah, winnie, stefano clocked in \(away day\)',
-        r'Mornin clocking in',
-        r'morning clocking in',
-        r'Mornin , clocking in',
-        r'Morning, clocking in',
-        r'morning, clocking in',
-        r'Morning...Clock in',
-        r'Morning...Clocking in \(WFH\)',
-        r'Clocking in for wfh 👨\u200d💻',
-        r'morning clocking in for wfh',
-        r'Morning clock in for wfh',
-        r'Clock in also wfh 😊',
-        r'clock in \(wfh\)',
-        r'Clocking in \(wfh\)',
-        r'Clocking in \(wfh\)',
-        r'Clocking in for wfh too',
-        r'clock in'
+        r'(\bmorning\b.*\bclock(?:ing|ed)\s*in\b)',
+        r'\bclock(?:ing|ed)\s*in\b',
+        r'\bclock(?:ing|ed)\s*in\b.*\b{}\b'.format(whatsapp_name.lower())
     ]
-
     patterns_out = [
-        r'Clocking out',
-        r'Clocked out',
-        r'Bye..clocking out',
-        r'Clocking out 👍',
-        r'Clocking out 🫡',
-        r'Bye...clocking out',
-        r'Clocking out bye',
-        r'Bye... clocking out',
-        r'Clocking out \(wfh\)',
-        r'Clocking out...bye',
-        r'Bye clocking out',
-        r'Clocked out at 6.00PM 🦦',
-        r'Clocking out byeee',
-        r'Clocking out happy weekenddd✨',
-        r'Clocking out for today🙏',
-        r'alright, thank you miss. Clocking out \(WFH\)',
-        r'I’m clocking out too',
-        r'Clocked our',
-        r'Clocking out \(wfh\)',
-        r'Clocking out🙏',
-        r'clock out \(wfh\)',
-        r'clock out',
-        r'Clocking  out'
+        r'\bclock(?:ing|ed)\s*out\b',
+        r'\bbye\b.*\bclock(?:ing|ed)\s*out\b'
     ]
 
+    # Combine all patterns for 'in' and 'out' matches
     pattern_in = '|'.join(patterns_in)
     pattern_out = '|'.join(patterns_out)
 
-    # Constructing the regex pattern with the whatsapp_name
-    pattern_in = r'\[(.*?)\] {}:\s*(.*?\b(?:{})\b.*?)\s*'.format(whatsapp_name.lower(), pattern_in)
-    pattern_out = r'\[(.*?)\] {}:\s*(.*?\b(?:{})\b.*?)\s*'.format(whatsapp_name.lower(), pattern_out)
-
-    # Iterate through each line in the file
+    # Loop through each line in the file
     for line in file_obj:
-        # Check for clocking in
-        match_in = re.search(pattern_in, line.lower(), re.IGNORECASE)
+        line_lower = line.lower()
+        match_in = re.search(pattern_in, line_lower, re.IGNORECASE)
+        match_out = re.search(pattern_out, line_lower, re.IGNORECASE)
+        
         if match_in:
-            date_str, _ = match_in.groups()
-            date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
-            if start_date <= date.date() <= end_date:
-                time_in = date.time()
-
-        # Check for clocking out
-        match_out = re.search(pattern_out, line.lower(), re.IGNORECASE)
-        if match_out and time_in is not None:
-            date_str, _ = match_out.groups()
-            date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
-            if start_date <= date.date() <= end_date:
+            time_in = datetime.strptime(match_in.group(), '%d/%m/%Y, %H:%M:%S')
+        elif match_out and time_in:
+            time_out = datetime.strptime(match_out.group(), '%d/%m/%Y, %H:%M:%S')
+            if start_date <= time_out.date() <= end_date:
                 attendance_data.append({
-                    'Date': date.date(),
+                    'Date': time_out.date(),
                     'Time_In': time_in.strftime('%H:%M'),
-                    'Time_Out': date.time().strftime('%H:%M')
+                    'Time_Out': time_out.strftime('%H:%M')
                 })
-                time_in = None
+            time_in = None
 
     # Create a DataFrame from the attendance data
     attendance_df = pd.DataFrame(attendance_data)
