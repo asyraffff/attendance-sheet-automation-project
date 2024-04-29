@@ -10,47 +10,57 @@ LOGGER = get_logger(__name__)
 
 # Function to extract attendance data
 # @st.cache_data
-def extract_attendance(file_obj, start_date, end_date):
+def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
-    pattern = r'\[(.*?)\] (.*?):\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'
+    # pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
+    pattern = r'\[(.*?)\] ((?:\+\d{1,3}\s?\d{1,2}\u200E?-\d{3}\s?\d{4})|(?:\w+(?:\s\w+)*(?:\s\w+\s\w+)*)?):\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'
     pattern_in = r'\b(clock|in)\b'
     pattern_out = r'\b(clock|out)\b'
 
+    # with open(file_path, 'r', encoding='utf-8') as f:
     for line in file_obj:
         match = re.search(pattern, line.lower(), re.IGNORECASE)
         if match:
-            groups = match.groups()
-            if len(groups) == 3:
-                date_str, username, status = groups
-                date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
-                if start_date <= date.date() <= end_date:
-                    matches_in = re.findall(pattern_in, status, re.IGNORECASE)
-                    matches_out = re.findall(pattern_out, status, re.IGNORECASE)
-                    if matches_in:
-                        time_in = date.time()
+            date_str, status = match.groups()
+            date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
+            if start_date <= date.date() <= end_date:
+                matches_in = re.findall(pattern_in, status, re.IGNORECASE)
+                matches_out = re.findall(pattern_out, status, re.IGNORECASE)
+                if matches_in:
+                    time_in = date.time()
+                elif matches_out:
+                    if time_in:
                         attendance_data.append({
                             'Date': date.date(),
                             'Time_In': time_in.strftime('%H:%M'),
-                            'Time_Out': 'Holiday',
-                            'Username': username.strip()
+                            'Time_Out': date.time().strftime('%H:%M')
                         })
-                    elif matches_out:
-                        if time_in:
-                            attendance_data.append({
-                                'Date': date.date(),
-                                'Time_In': time_in.strftime('%H:%M'),
-                                'Time_Out': date.time().strftime('%H:%M'),
-                                'Username': username.strip()
-                            })
-                            time_in = None
+                        time_in = None
 
+    # Create a DataFrame from the attendance data
     attendance_df = pd.DataFrame(attendance_data)
+    # attendance_df = pd.DataFrame(attendance_data, columns=['Date', 'Time_In', 'Time_Out'])
 
-    if 'Date' in attendance_df.columns:
-        attendance_df['Date'] = pd.to_datetime(attendance_df['Date'])
+    # Convert the 'Date' column to datetime64[ns] data type
+    attendance_df['Date'] = pd.to_datetime(attendance_df['Date'])
 
-    return attendance_df
+    # Create a range of dates between start_date and end_date
+    date_range = pd.date_range(start_date, end_date, freq='D')
+
+    # Create a DataFrame with the date range
+    date_range_df = pd.DataFrame({'Date': date_range})
+
+    # Merge the extracted attendance data with the date range DataFrame
+    merged_df = date_range_df.merge(attendance_df, how='left', on='Date')
+
+    # Remove the time component from the Date column
+    merged_df['Date'] = merged_df['Date'].dt.date
+
+    # Fill missing values with 'Holiday'
+    merged_df = merged_df.fillna({'Time_In': 'Holiday', 'Time_Out': 'Holiday'})
+
+    return merged_df
 
 # Streamlit app
 def app():
@@ -77,9 +87,7 @@ def app():
         file_stream = StringIO(file_content)
 
         # Extract attendance data
-        # attendance_df = extract_attendance(file_stream, start_date, end_date, whatsapp_name)
-        attendance_df = extract_attendance(file_stream, start_date, end_date)
-
+        attendance_df = extract_attendance(file_stream, start_date, end_date, whatsapp_name)
 
         # Display attendance data
         st.write("Attendance Data:")
