@@ -13,40 +13,39 @@ LOGGER = get_logger(__name__)
 def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
-    patterns_in = [
-        r'(\bmorning\b.*\bclock(?:ing|ed)\s*in\b)',
-        r'\bclock(?:ing|ed)\s*in\b',
-        r'\bclock(?:ing|ed)\s*in\b.*\b{}\b'.format(whatsapp_name.lower())
-    ]
-    patterns_out = [
-        r'\bclock(?:ing|ed)\s*out\b',
-        r'\bbye\b.*\bclock(?:ing|ed)\s*out\b'
-    ]
+    pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
+    # pattern_in = r'\b(clock|in)\b'
+    # pattern_out = r'\b(clock|out)\b'
+    # pattern_in = r'\b(clock(?:ing)?\s*in|morning\s*(?:clocking\s*in)?)\b'
+    # pattern_out = r'\b(clock(?:ing)?\s*out|bye)\b'
+    pattern_in = r'\b(clock(?:ing)?\s*in|morning[,\s]+clock(?:ing)?\s*in)\b'
+    pattern_out = r'\b(clock(?:ing)?\s*out|clocked\s*out)\b'
 
-    # Combine all patterns for 'in' and 'out' matches
-    pattern_in = '|'.join(patterns_in)
-    pattern_out = '|'.join(patterns_out)
 
-    # Loop through each line in the file
+
+    # with open(file_path, 'r', encoding='utf-8') as f:
     for line in file_obj:
-        line_lower = line.lower()
-        match_in = re.search(pattern_in, line_lower, re.IGNORECASE)
-        match_out = re.search(pattern_out, line_lower, re.IGNORECASE)
-        
-        if match_in:
-            time_in = datetime.strptime(match_in.group(), '%d/%m/%Y, %H:%M:%S')
-        elif match_out and time_in:
-            time_out = datetime.strptime(match_out.group(), '%d/%m/%Y, %H:%M:%S')
-            if start_date <= time_out.date() <= end_date:
-                attendance_data.append({
-                    'Date': time_out.date(),
-                    'Time_In': time_in.strftime('%H:%M'),
-                    'Time_Out': time_out.strftime('%H:%M')
-                })
-            time_in = None
+        match = re.search(pattern, line.lower(), re.IGNORECASE)
+        if match:
+            date_str, status = match.groups()
+            date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
+            if start_date <= date.date() <= end_date:
+                matches_in = re.findall(pattern_in, status, re.IGNORECASE)
+                matches_out = re.findall(pattern_out, status, re.IGNORECASE)
+                if matches_in:
+                    time_in = date.time()
+                elif matches_out:
+                    if time_in:
+                        attendance_data.append({
+                            'Date': date.date(),
+                            'Time_In': time_in.strftime('%H:%M'),
+                            'Time_Out': date.time().strftime('%H:%M')
+                        })
+                        time_in = None
 
     # Create a DataFrame from the attendance data
     attendance_df = pd.DataFrame(attendance_data)
+    # attendance_df = pd.DataFrame(attendance_data, columns=['Date', 'Time_In', 'Time_Out'])
 
     # Convert the 'Date' column to datetime64[ns] data type
     attendance_df['Date'] = pd.to_datetime(attendance_df['Date'])
