@@ -13,30 +13,30 @@ LOGGER = get_logger(__name__)
 def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
-    # pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
     pattern = r'\[(.*?)\] ({}):\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower().replace(" ", r"\s+"))
     pattern_in = r'\b(clock|in)\b'
     pattern_out = r'\b(clock|out)\b'
 
-    # with open(file_path, 'r', encoding='utf-8') as f:
     for line in file_obj:
         match = re.search(pattern, line.lower(), re.IGNORECASE)
         if match:
-            date_str, status = match.groups()
-            date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
-            if start_date <= date.date() <= end_date:
-                matches_in = re.findall(pattern_in, status, re.IGNORECASE)
-                matches_out = re.findall(pattern_out, status, re.IGNORECASE)
-                if matches_in:
-                    time_in = date.time()
-                elif matches_out:
-                    if time_in:
-                        attendance_data.append({
-                            'Date': date.date(),
-                            'Time_In': time_in.strftime('%H:%M'),
-                            'Time_Out': date.time().strftime('%H:%M')
-                        })
-                        time_in = None
+            groups = match.groups()
+            if len(groups) == 2:  # Check if the number of groups is 2
+                date_str, status = groups
+                date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
+                if start_date <= date.date() <= end_date:
+                    matches_in = re.findall(pattern_in, status, re.IGNORECASE)
+                    matches_out = re.findall(pattern_out, status, re.IGNORECASE)
+                    if matches_in:
+                        time_in = date.time()
+                    elif matches_out:
+                        if time_in:
+                            attendance_data.append({
+                                'Date': date.date(),
+                                'Time_In': time_in.strftime('%H:%M'),
+                                'Time_Out': date.time().strftime('%H:%M')
+                            })
+                            time_in = None
 
     # Create a DataFrame from the attendance data
     attendance_df = pd.DataFrame(attendance_data)
