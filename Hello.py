@@ -77,7 +77,9 @@ def app():
         file_stream = StringIO(file_content)
 
         # Extract attendance data
-        attendance_df = extract_attendance(file_stream, start_date, end_date, whatsapp_name)
+        # attendance_df = extract_attendance(file_stream, start_date, end_date, whatsapp_name)
+        attendance_df = extract_attendance(file_stream, start_date, end_date)
+
 
         # Display attendance data
         st.write("Attendance Data:")
