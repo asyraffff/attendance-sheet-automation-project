@@ -38,10 +38,10 @@ def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
                         time_in = None
 
     # Create a DataFrame from the attendance data
-    # attendance_df = pd.DataFrame(attendance_data)
-    attendance_df = pd.DataFrame(attendance_data, columns=['Date', 'Time_In', 'Time_Out'])
-    print(attendance_df)
-    
+    attendance_df = pd.DataFrame(attendance_data)
+    # attendance_df = pd.DataFrame(attendance_data, columns=['Date', 'Time_In', 'Time_Out'])
+    # print(attendance_df)
+
     # Convert the 'Date' column to datetime64[ns] data type
     attendance_df['Date'] = pd.to_datetime(attendance_df['Date'])
 
