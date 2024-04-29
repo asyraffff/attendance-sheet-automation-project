@@ -14,14 +14,51 @@ def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
     pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
+    
+    # List of patterns to match
+    patterns_clock = [
+        'Morning, clocking in, hi Asyraf', 'Clocking out', 'Clocked out',
+        'Clocking in', 'Morning...clocking in',
+        'Good morning, clocking in', 'morning clock in',
+        'Bye..clocking out', 'Clocking out 👍', 'Clocking out 🫡',
+        'Morning clock in', 'Morning... clocking in', 'Bye...clocking out',
+        'Morning clocking in', 'Clock in', 'Bye... clocking out',
+        'Clocking out bye', "Clock out 👍 see y'all next week",
+        'Clocked out happy weekend', 'Morning.. clocking in',
+        'Good morning, clock in',
+        'Aisyah, winnie, stefano clocked in (away day)',
+        'Aisyah and Winnie Clocking out and check in',
+        'Clocked out, sorry inform here late cuz phone got problem',
+        'Morning..clock in', 'clocking out', 'Clocking out...bye',
+        'Clocked in', 'Bye clocking out', 'Clocked out at 6.00PM 🦦',
+        'Morning Clocking in', 'Clocking in 👍', 'Clocking out byeee',
+        'Clocking out happy weekenddd✨', 'Clock out',
+        'question, if let say i clock in at 8am, and i choose not to have a lunch break, means i continue working during the break, can i clock out at 4pm? \u200e<This message was edited>',
+        'Mornin clocking in', 'morning clocking in',
+        'Mornin , clocking in', 'Clock out (wfh)', 'Morning, clocking in',
+        'morning, clocking in', 'Clock in (wfh)',
+        'Clock in \u200e<This message was edited>', 'clock out (wfh)',
+        'Morning...Clock in', 'Morning...Clocking in (WFH)',
+        'Clocking in for wfh 👨\u200d💻', 'morning clocking in for wfh',
+        'Clocking out for today🙏',
+        'alright, thank you miss. Clocking out (WFH)',
+        'I’m clocking out too', 'Clocked our', 'Clocking out (wfh)',
+        'Morning clock in for wfh', 'Clock in also wfh 😊', 'Clocking out🙏',
+        'clock in (wfh)', 'clock out', 'Clock in for wfh too', 'clock in',
+        'Clocking  out', 'Morning... clock in', 'Clocking in (wfh)'
+    ]
+
+    # Combine patterns into a single regular expression pattern
+    combined_pattern = '|'.join(map(re.escape, patterns_clock))
+
+    # Pattern to match clocking in
+    pattern_in = r'\b(?:{})\b'.format(combined_pattern)
+
+    # Pattern to match clocking out
+    pattern_out = r'\b(?:{})\b'.format(combined_pattern)
+
     # pattern_in = r'\b(clock|in)\b'
     # pattern_out = r'\b(clock|out)\b'
-    # pattern_in = r'\b(clock(?:ing)?\s*in|morning\s*(?:clocking\s*in)?)\b'
-    # pattern_out = r'\b(clock(?:ing)?\s*out|bye)\b'
-    pattern_in = r'\b(clock(?:ing)?\s*in|morning[,\s]+clock(?:ing)?\s*in)\b'
-    pattern_out = r'\b(clock(?:ing)?\s*out|clocked\s*out)\b'
-
-
 
     # with open(file_path, 'r', encoding='utf-8') as f:
     for line in file_obj:
@@ -80,8 +117,8 @@ def app():
     file = st.file_uploader("Upload WhatsApp chat file", type="txt")
 
     # Input fields
-    start_date = st.date_input("Start Date", value=datetime(2024, 3, 1).date())
-    end_date = st.date_input("End Date", value=datetime(2024, 3, 31).date())
+    start_date = st.date_input("Start Date", value=datetime(2024, 4, 1).date())
+    end_date = st.date_input("End Date", value=datetime(2024, 4, 30).date())
     whatsapp_name = st.text_input("WhatsApp Name", value="farysa")
 
     if file:
