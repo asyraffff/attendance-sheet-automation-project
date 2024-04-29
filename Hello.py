@@ -13,76 +13,96 @@ LOGGER = get_logger(__name__)
 def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
-    pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
-    
-    # List of patterns to match
-    patterns_clock = [
-        'Morning, clocking in, hi Asyraf', 'Clocking out', 'Clocked out',
-        'Clocking in', 'Morning...clocking in',
-        'Good morning, clocking in', 'morning clock in',
-        'Bye..clocking out', 'Clocking out 👍', 'Clocking out 🫡',
-        'Morning clock in', 'Morning... clocking in', 'Bye...clocking out',
-        'Morning clocking in', 'Clock in', 'Bye... clocking out',
-        'Clocking out bye', "Clock out 👍 see y'all next week",
-        'Clocked out happy weekend', 'Morning.. clocking in',
-        'Good morning, clock in',
-        'Aisyah, winnie, stefano clocked in (away day)',
-        'Aisyah and Winnie Clocking out and check in',
-        'Clocked out, sorry inform here late cuz phone got problem',
-        'Morning..clock in', 'clocking out', 'Clocking out...bye',
-        'Clocked in', 'Bye clocking out', 'Clocked out at 6.00PM 🦦',
-        'Morning Clocking in', 'Clocking in 👍', 'Clocking out byeee',
-        'Clocking out happy weekenddd✨', 'Clock out',
-        'question, if let say i clock in at 8am, and i choose not to have a lunch break, means i continue working during the break, can i clock out at 4pm? \u200e<This message was edited>',
-        'Mornin clocking in', 'morning clocking in',
-        'Mornin , clocking in', 'Clock out (wfh)', 'Morning, clocking in',
-        'morning, clocking in', 'Clock in (wfh)',
-        'Clock in \u200e<This message was edited>', 'clock out (wfh)',
-        'Morning...Clock in', 'Morning...Clocking in (WFH)',
-        'Clocking in for wfh 👨\u200d💻', 'morning clocking in for wfh',
-        'Clocking out for today🙏',
-        'alright, thank you miss. Clocking out (WFH)',
-        'I’m clocking out too', 'Clocked our', 'Clocking out (wfh)',
-        'Morning clock in for wfh', 'Clock in also wfh 😊', 'Clocking out🙏',
-        'clock in (wfh)', 'clock out', 'Clock in for wfh too', 'clock in',
-        'Clocking  out', 'Morning... clock in', 'Clocking in (wfh)'
+
+    # Define patterns for clocking in and out
+    patterns_in = [
+        r'Morning, clocking in, hi {}',
+        r'Morning...clocking in',
+        r'Good morning, clocking in',
+        r'morning clock in',
+        r'Morning clock in',
+        r'Morning... clocking in',
+        r'Morning clocking in',
+        r'Morning clocking in',
+        r'Morning.. clocking in',
+        r'Good morning, clock in',
+        r'Aisyah, winnie, stefano clocked in \(away day\)',
+        r'Mornin clocking in',
+        r'morning clocking in',
+        r'Mornin , clocking in',
+        r'Morning, clocking in',
+        r'morning, clocking in',
+        r'Morning...Clock in',
+        r'Morning...Clocking in \(WFH\)',
+        r'Clocking in for wfh 👨\u200d💻',
+        r'morning clocking in for wfh',
+        r'Morning clock in for wfh',
+        r'Clock in also wfh 😊',
+        r'clock in \(wfh\)',
+        r'Clocking in \(wfh\)',
+        r'Clocking in \(wfh\)',
+        r'Clocking in for wfh too',
+        r'clock in'
     ]
 
-    # Combine patterns into a single regular expression pattern
-    combined_pattern = '|'.join(map(re.escape, patterns_clock))
+    patterns_out = [
+        r'Clocking out',
+        r'Clocked out',
+        r'Bye..clocking out',
+        r'Clocking out 👍',
+        r'Clocking out 🫡',
+        r'Bye...clocking out',
+        r'Clocking out bye',
+        r'Bye... clocking out',
+        r'Clocking out \(wfh\)',
+        r'Clocking out...bye',
+        r'Bye clocking out',
+        r'Clocked out at 6.00PM 🦦',
+        r'Clocking out byeee',
+        r'Clocking out happy weekenddd✨',
+        r'Clocking out for today🙏',
+        r'alright, thank you miss. Clocking out \(WFH\)',
+        r'I’m clocking out too',
+        r'Clocked our',
+        r'Clocking out \(wfh\)',
+        r'Clocking out🙏',
+        r'clock out \(wfh\)',
+        r'clock out',
+        r'Clocking  out'
+    ]
 
-    # Pattern to match clocking in
-    pattern_in = r'\b(?:{})\b'.format(combined_pattern)
+    pattern_in = '|'.join(patterns_in)
+    pattern_out = '|'.join(patterns_out)
 
-    # Pattern to match clocking out
-    pattern_out = r'\b(?:{})\b'.format(combined_pattern)
+    # Constructing the regex pattern with the whatsapp_name
+    pattern_in = r'\[(.*?)\] {}:\s*(.*?\b(?:{})\b.*?)\s*'.format(whatsapp_name.lower(), pattern_in)
+    pattern_out = r'\[(.*?)\] {}:\s*(.*?\b(?:{})\b.*?)\s*'.format(whatsapp_name.lower(), pattern_out)
 
-    # pattern_in = r'\b(clock|in)\b'
-    # pattern_out = r'\b(clock|out)\b'
-
-    # with open(file_path, 'r', encoding='utf-8') as f:
+    # Iterate through each line in the file
     for line in file_obj:
-        match = re.search(pattern, line.lower(), re.IGNORECASE)
-        if match:
-            date_str, status = match.groups()
+        # Check for clocking in
+        match_in = re.search(pattern_in, line.lower(), re.IGNORECASE)
+        if match_in:
+            date_str, _ = match_in.groups()
             date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
             if start_date <= date.date() <= end_date:
-                matches_in = re.findall(pattern_in, status, re.IGNORECASE)
-                matches_out = re.findall(pattern_out, status, re.IGNORECASE)
-                if matches_in:
-                    time_in = date.time()
-                elif matches_out:
-                    if time_in:
-                        attendance_data.append({
-                            'Date': date.date(),
-                            'Time_In': time_in.strftime('%H:%M'),
-                            'Time_Out': date.time().strftime('%H:%M')
-                        })
-                        time_in = None
+                time_in = date.time()
+
+        # Check for clocking out
+        match_out = re.search(pattern_out, line.lower(), re.IGNORECASE)
+        if match_out and time_in is not None:
+            date_str, _ = match_out.groups()
+            date = datetime.strptime(date_str, '%d/%m/%Y, %H:%M:%S')
+            if start_date <= date.date() <= end_date:
+                attendance_data.append({
+                    'Date': date.date(),
+                    'Time_In': time_in.strftime('%H:%M'),
+                    'Time_Out': date.time().strftime('%H:%M')
+                })
+                time_in = None
 
     # Create a DataFrame from the attendance data
     attendance_df = pd.DataFrame(attendance_data)
-    # attendance_df = pd.DataFrame(attendance_data, columns=['Date', 'Time_In', 'Time_Out'])
 
     # Convert the 'Date' column to datetime64[ns] data type
     attendance_df['Date'] = pd.to_datetime(attendance_df['Date'])
