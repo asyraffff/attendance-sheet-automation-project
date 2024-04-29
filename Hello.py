@@ -13,10 +13,11 @@ LOGGER = get_logger(__name__)
 def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
-    pattern = r'\[(.*?)\] (?:{}.*?):\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
+    pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
     pattern_in = r'\b(clock|in)\b'
     pattern_out = r'\b(clock|out)\b'
 
+    # with open(file_path, 'r', encoding='utf-8') as f:
     for line in file_obj:
         match = re.search(pattern, line.lower(), re.IGNORECASE)
         if match:
@@ -36,9 +37,30 @@ def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
                         })
                         time_in = None
 
+    # Create a DataFrame from the attendance data
     attendance_df = pd.DataFrame(attendance_data)
+    # attendance_df = pd.DataFrame(attendance_data, columns=['Date', 'Time_In', 'Time_Out'])
+    # print(attendance_df)
+
+    # Convert the 'Date' column to datetime64[ns] data type
     attendance_df['Date'] = pd.to_datetime(attendance_df['Date'])
-    return attendance_df
+
+    # Create a range of dates between start_date and end_date
+    date_range = pd.date_range(start_date, end_date, freq='D')
+
+    # Create a DataFrame with the date range
+    date_range_df = pd.DataFrame({'Date': date_range})
+
+    # Merge the extracted attendance data with the date range DataFrame
+    merged_df = date_range_df.merge(attendance_df, how='left', on='Date')
+
+    # Remove the time component from the Date column
+    merged_df['Date'] = merged_df['Date'].dt.date
+
+    # Fill missing values with 'Holiday'
+    merged_df = merged_df.fillna({'Time_In': 'Holiday', 'Time_Out': 'Holiday'})
+
+    return merged_df
 
 # Streamlit app
 def app():
