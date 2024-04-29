@@ -79,7 +79,7 @@ def app():
     # Input fields
     start_date = st.date_input("Start Date", value=datetime(2024, 3, 1).date())
     end_date = st.date_input("End Date", value=datetime(2024, 3, 31).date())
-    whatsapp_name = st.text_input("WhatsApp Name", value="asyraf")
+    whatsapp_name = st.text_input("WhatsApp Name", value="farysa")
 
     if file:
         # Read the contents of the uploaded file
