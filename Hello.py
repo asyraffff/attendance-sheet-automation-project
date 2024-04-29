@@ -13,7 +13,8 @@ LOGGER = get_logger(__name__)
 def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
-    pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
+    # pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
+    pattern = r'\[(.*?)\] ({}):\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower().replace(" ", r"\s+"))
     pattern_in = r'\b(clock|in)\b'
     pattern_out = r'\b(clock|out)\b'
 
