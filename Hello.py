@@ -14,8 +14,11 @@ def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
     attendance_data = []
     time_in = None
     pattern = r'\[(.*?)\] {}:\s*(.*?\b(?:clock(?:ed\s*out|ing\s*in|ing\s*out)|morning[,\s]+clock(?:ing\s*in|ing\s*out))\b.*?)\s*'.format(whatsapp_name.lower())
-    pattern_in = r'\b(clock|in)\b'
-    pattern_out = r'\b(clock|out)\b'
+    # pattern_in = r'\b(clock|in)\b'
+    # pattern_out = r'\b(clock|out)\b'
+    pattern_in = r'\b(clock(?:ing)?\s*in|morning\s*(?:clocking\s*in)?)\b'
+    pattern_out = r'\b(clock(?:ing)?\s*out|bye)\b'
+
 
     # with open(file_path, 'r', encoding='utf-8') as f:
     for line in file_obj:
