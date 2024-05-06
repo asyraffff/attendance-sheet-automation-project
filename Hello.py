@@ -71,12 +71,12 @@ def extract_attendance(file_obj, start_date, end_date, whatsapp_name):
         r'Clocking  out'
     ]
 
-    pattern_in = '|'.join(patterns_in)
-    pattern_out = '|'.join(patterns_out)
+    pattern__in = '|'.join(patterns_in)
+    pattern__out = '|'.join(patterns_out)
 
     # Constructing the regex pattern with the whatsapp_name
-    pattern_in = r'\[(.*?)\] {}:\s*(.*?\b(?:{})\b.*?)\s*'.format(whatsapp_name.lower(), pattern_in)
-    pattern_out = r'\[(.*?)\] {}:\s*(.*?\b(?:{})\b.*?)\s*'.format(whatsapp_name.lower(), pattern_out)
+    pattern_in = r'\[(.*?)\] {}:\s*(.*?\b(?:{})\b.*?)\s*'.format(whatsapp_name.lower(), pattern__in)
+    pattern_out = r'\[(.*?)\] {}:\s*(.*?\b(?:{})\b.*?)\s*'.format(whatsapp_name.lower(), pattern__out)
 
     # Iterate through each line in the file
     for line in file_obj:
